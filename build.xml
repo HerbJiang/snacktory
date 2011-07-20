@@ -5,10 +5,10 @@
   <property name="doc.dir" location="${basedir}/doc"/> 
   <property name="log.dir" location="${basedir}/log"/> 
   <property name="lib.dir" location="${basedir}/lib"/> 
-  <property name="src.dir" location="${basedir}/src/java/main"/>
+  <property name="src.dir" location="${basedir}/src/main/java/"/>
   <property name="jar.dir" location="${basedir}/jar"/>
 
-  <property name="test.src.dir" location="${basedir}/src/java/tests"/>
+  <property name="test.src.dir" location="${basedir}/src/test/java"/>
   <property name="test.build.dir" location="${build.dir}/tests"/>
 
   <!-- TODO: add an ability to run it from console! -->

@@ -168,7 +168,14 @@ public class ArticleTextExtractor {
             weight -= 50;
 
         weight += (int) Math.round(e.ownText().length() / 100.0 * 10);
-        weight += weightChildNodes(e);
+        
+/*        if ("body".equalsIgnoreCase(e.tagName())) {
+            for (Element child : e.children()) {
+            	weight += getWeight(child);
+            }
+        }
+        else */
+        	weight += weightChildNodes(e);
         return weight;
     }
 
@@ -278,7 +285,7 @@ public class ArticleTextExtractor {
             if (sourceUrl.isEmpty() || isAdImage(sourceUrl))
                 continue;
 
-            int weight = 0;
+            int weight = els.size() == 1 ? 1 : 0;
             try {
                 int height = Integer.parseInt(e.attr("height"));
                 if (height > 50)

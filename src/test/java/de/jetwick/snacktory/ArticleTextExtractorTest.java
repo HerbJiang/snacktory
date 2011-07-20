@@ -207,6 +207,16 @@ public class ArticleTextExtractorTest {
         assertEquals("Editorial: Android's problem isn't fragmentation, it's contamination -- Engadget", res.getTitle());
     }
 
+
+    @Test
+    public void testEngadgetChinese() throws Exception {
+        // http://chinese.engadget.com/2011/07/19/victorinox-swiss-army-slim-slim-duo/
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("engadget_chinese.html")));
+        assertTrue(res.getText(), res.getText().startsWith("相信對經常郊遊的朋友來說，瑞士軍刀 Victorinox 的名字絕對不會陌生，今次要介紹的雖然也是 Victorinox，但卻不是常常見到的小刀和鏍絲起子"));
+        assertEquals("http://www.blogcdn.com/chinese.engadget.com/media/2011/07/2011-07-19-victorinox.jpg", res.getImageUrl());
+        assertEquals("不怕被搜到的瑞士軍刀 Victorinox Swiss Army Slim, Slim Duo 隨身碟上市", res.getTitle());
+    }
+    
     @Test
     public void testTwitterblog() throws Exception {
         // http://engineering.twitter.com/2011/04/twitter-search-is-now-3x-faster_1656.html
@@ -489,7 +499,7 @@ public class ArticleTextExtractorTest {
         //String url = "http://www.economist.com/node/17956885";
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("economist.html")));
         assertTrue(article.getText(), article.getText().startsWith("FOR beleaguered smokers, the world is an increasingly"));
-        assertEquals("http://www.economist.com/sites/default/files/images/articles/migrated/20110122_stp004.jpg",
+        assertEquals("http://media.economist.com/images/images-magazine/2011/01/22/st/20110122_stp004.jpg",
                 article.getImageUrl());
     }
 

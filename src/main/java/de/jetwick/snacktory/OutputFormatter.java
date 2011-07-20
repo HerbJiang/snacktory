@@ -28,16 +28,20 @@ public class OutputFormatter {
         convertLinksToText();
         replaceTagsWithText();
 
+        String str = null;
         StringBuilder sb = new StringBuilder();
         append(topNode, sb, "p");
-        String str = SHelper.innerTrim(sb.toString());
-        if (str.length() > 100)
+        str = SHelper.innerTrim(sb.toString());
+        if (str.length() > 500)
             return str;
-
         // no subelements
-        if (str.isEmpty() || !topNode.text().isEmpty() && str.length() <= topNode.ownText().length())
+        else if (str.isEmpty() || !topNode.text().isEmpty() && str.length() <= topNode.text().length())
             str = topNode.text();
-
+        
+        /*
+        if (!topNode.text().isEmpty())
+        	str = topNode.text();*/
+        
         // if jsoup failed to parse the whole html now parse this smaller 
         // snippet again to avoid html tags disturbing our text:
         return Jsoup.parse(str).text();
