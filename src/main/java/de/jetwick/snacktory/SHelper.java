@@ -25,6 +25,9 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -38,6 +41,18 @@ import org.jsoup.nodes.Element;
 public class SHelper {
 
     public static final String UTF8 = "UTF-8";
+    private static final Pattern SPACE = Pattern.compile(" ");
+
+    public static String replaceSpaces(String url) {
+        if (!url.isEmpty()) {
+            url = url.trim();
+            if (url.contains(" ")) {
+                Matcher spaces = SPACE.matcher(url);
+                url = spaces.replaceAll("%20");
+            }
+        }
+        return url;
+    }
 
     public static int count(String str, String substring) {
         int c = 0;
@@ -145,14 +160,19 @@ public class SHelper {
     /**
      * @param urlForDomain extract the domain from this url
      * @param path this url does not have a domain
-     * @param includeMobile
      * @return 
      */
     public static String useDomainOfFirstArg4Second(String urlForDomain, String path) {
         if ("favicon.ico".equals(path))
             path = "/favicon.ico";
 
-        if (path.startsWith("http"))
+        if (path.startsWith("//")) {
+            // wikipedia special case, see tests
+            if (urlForDomain.startsWith("https:"))
+                return "https:" + path;
+            else
+                return "http:" + path;
+        } else if (path.startsWith("http"))
             return path;
         else if (path.startsWith("/"))
             return "http://" + extractHost(urlForDomain) + path;

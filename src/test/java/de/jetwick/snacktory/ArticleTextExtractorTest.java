@@ -1,10 +1,13 @@
 package de.jetwick.snacktory;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ArticleTextExtractorTest {
 
@@ -156,10 +159,10 @@ public class ArticleTextExtractorTest {
 
     @Test
     public void testITunes() throws Exception {
-        // http://itunes.apple.com/us/album/songs-for-japan/id428401715
+        // http://itunes.apple.com/us/album/21/id420075073
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("itunes.html")));
-        assertTrue(res.getText().isEmpty());
-        assertTrue("itunes:" + res.getDescription(), res.getDescription().startsWith("Preview and download songs from Songs for Japan by Various Artists"));
+        assertTrue(res.getText(), res.getText().startsWith("What else can be said of this album other than that it is simply amazing? Adele's voice is powerful, vulnerable, assured, and heartbreaking all in one fell swoop."));
+        assertTrue("itunes:" + res.getDescription(), res.getDescription().startsWith("Preview songs from 21 by ADELE"));
     }
 
     @Test
@@ -524,10 +527,13 @@ public class ArticleTextExtractorTest {
     @Test
     public void testWikipedia() throws Exception {
         // String url = "http://en.wikipedia.org/wiki/Therapsids";
+        // Wikipedia has the advantage of also testing protocol relative URL extraction for Favicon and Images.
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("wikipedia.html")));
-        assertTrue(article.getText(), article.getText().startsWith("Therapsida is a group of synapsids that includes mammals and their immediate evolutionary ancestors. The earliest fossil attributed to Therapsida is b"));
-        assertEquals("http://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pristeroognathus_DB.jpg/240px-Pristeroognathus_DB.jpg",
+        assertTrue(article.getText(), article.getText().startsWith("Therapsida is a group of the most advanced reptile-grade synapsids, and the ancestors of mammals"));
+        assertEquals("//upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pristeroognathus_DB.jpg/240px-Pristeroognathus_DB.jpg",
                 article.getImageUrl());
+        assertEquals("//en.wikipedia.org/apple-touch-icon.png",
+                article.getFaviconUrl());
     }
 
     @Test
@@ -596,6 +602,13 @@ public class ArticleTextExtractorTest {
 
         // this should fail as most sites do store their name after the post
         assertEquals("Irgendwas | mytitle irgendwas", extractor.cleanTitle("Irgendwas | mytitle irgendwas"));
+    }
+    
+    @Test
+    public void testGaltimeWhereUrlContainsSpaces() throws Exception {
+        //String url = "http://galtime.com/article/entertainment/37/22938/kris-humphries-avoids-kim-talk-gma";
+        JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("galtime.com.html")));
+        assertEquals("http://vnetcdn.dtsph.com/files/vnet3/imagecache/opengraph_ogimage/story-images/Kris%20Humphries%20Top%20Bar.JPG", article.getImageUrl());
     }
 
     /**

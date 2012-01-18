@@ -80,6 +80,37 @@ public class HtmlFetcher {
     private AtomicInteger cacheCounter = new AtomicInteger(0);
     private int maxTextLength = -1;
     private ArticleTextExtractor extractor = new ArticleTextExtractor();
+    private Set<String> furtherResolveNecessary = new LinkedHashSet<String>() {
+
+        {
+            add("bit.ly");
+            add("cli.gs");
+            add("deck.ly");
+            add("fb.me");
+            add("feedproxy.google.com");
+            add("flic.kr");
+            add("fur.ly");
+            add("goo.gl");
+            add("is.gd");
+            add("ink.co");
+            add("j.mp");
+            add("lnkd.in");
+            add("on.fb.me");
+            add("ow.ly");
+            add("plurl.us");
+            add("sns.mx");
+            add("snurl.com");
+            add("su.pr");
+            add("t.co");
+            add("tcrn.ch");
+            add("tl.gd");
+            add("tiny.cc");
+            add("tinyurl.com");
+            add("tmi.me");
+            add("tr.im");
+            add("twurl.nl");
+        }
+    };
 
     public HtmlFetcher() {
     }
@@ -195,7 +226,7 @@ public class HtmlFetcher {
 
             // if resolved url is longer then use it!
             if (resUrl != null && resUrl.trim().length() > url.length()) {
-                // this is necessary e.g. for some homebaken url resolvers which returl 
+                // this is necessary e.g. for some homebaken url resolvers which return
                 // the resolved url relative to url!
                 url = SHelper.useDomainOfFirstArg4Second(url, resUrl);
             }
@@ -203,8 +234,8 @@ public class HtmlFetcher {
 
         // check if we have the (resolved) URL in cache
         JResult res = getFromCache(url, originalUrl);
-        if (res != null)            
-            return res;        
+        if (res != null)
+            return res;
 
         JResult result = new JResult();
         // or should we use? <link rel="canonical" href="http://www.N24.de/news/newsitem_6797232.html"/>
@@ -215,7 +246,7 @@ public class HtmlFetcher {
         // Immediately put the url into the cache as extracting content takes time.
         if (cache != null) {
             cache.put(originalUrl, result);
-            cache.put(url, result);        
+            cache.put(url, result);
         }
 
         String lowerUrl = url.toLowerCase();
@@ -236,7 +267,7 @@ public class HtmlFetcher {
             result.setVideoUrl(fixUrl(url, result.getVideoUrl()));
             result.setRssUrl(fixUrl(url, result.getRssUrl()));
         }
-        result.setText(lessText(result.getText()));        
+        result.setText(lessText(result.getText()));
         synchronized (result) {
             result.notifyAll();
         }
@@ -264,9 +295,6 @@ public class HtmlFetcher {
 
     public String fetchAsString(String urlAsString, int timeout, boolean includeSomeGooseOptions)
             throws MalformedURLException, IOException {
-        if (logger.isDebugEnabled())
-            logger.debug("FetchAsString:" + urlAsString);
-
         HttpURLConnection hConn = createUrlConnection(urlAsString, timeout, includeSomeGooseOptions);
         hConn.setInstanceFollowRedirects(true);
         InputStream is = hConn.getInputStream();
@@ -275,19 +303,27 @@ public class HtmlFetcher {
 //                is = new GZIPInputStream(is);                        
 
         String enc = Converter.extractEncoding(hConn.getContentType());
-        return new Converter(urlAsString).streamToString(is, enc);
+        String res = createConverter(urlAsString).streamToString(is, enc);
+        if (logger.isDebugEnabled())
+            logger.debug(res.length() + " FetchAsString:" + urlAsString);
+        return res;
+    }
+    
+    public Converter createConverter(String url) {
+        return new Converter(url);
     }
 
     /**
      * On some devices we have to hack:
      * http://developers.sun.com/mobility/reference/techart/design_guidelines/http_redirection.html
+     * @param timeout Sets a specified timeout value, in milliseconds
      * @return the resolved url if any. Or null if it couldn't resolve the url
      * (within the specified time) or the same url if response code is OK
      */
     public String getResolvedUrl(String urlAsString, int timeout) {
+        String newUrl = null;
+        int responseCode = -1;
         try {
-            if (logger.isDebugEnabled())
-                logger.debug("getResolvedUrl:" + urlAsString);
             HttpURLConnection hConn = createUrlConnection(urlAsString, timeout, true);
             // force no follow
             hConn.setInstanceFollowRedirects(false);
@@ -295,24 +331,33 @@ public class HtmlFetcher {
             // http://java.sun.com/developer/JDCTechTips/2003/tt0422.html
             hConn.setRequestMethod("HEAD");
             hConn.connect();
-            int responseCode = hConn.getResponseCode();
+            responseCode = hConn.getResponseCode();
             hConn.getInputStream().close();
             if (responseCode == HttpURLConnection.HTTP_OK)
                 return urlAsString;
 
-            String loc = hConn.getHeaderField("Location");
-            if (responseCode / 100 == 3 && loc != null) {
-                loc = loc.replaceAll(" ", "+");
+            newUrl = hConn.getHeaderField("Location");
+            if (responseCode / 100 == 3 && newUrl != null) {
+                newUrl = newUrl.replaceAll(" ", "+");
+                // some services use (none-standard) utf8 in their location header
                 if (urlAsString.startsWith("http://bit.ly") || urlAsString.startsWith("http://is.gd"))
-                    loc = encodeUriFromHeader(loc);
-                return loc;
+                    newUrl = encodeUriFromHeader(newUrl);
+
+                // fix problems if shortened twice. as it is often the case after twitters' t.co bullshit
+                if (furtherResolveNecessary.contains(SHelper.extractDomain(newUrl, true)))
+                    newUrl = getResolvedUrl(newUrl, timeout);
+
+                return newUrl;
             } else
                 return urlAsString;
 
         } catch (Exception ex) {
             logger.error("getResolvedUrl:" + urlAsString + " Error:" + ex.getMessage());
+            return "";
+        } finally {
+            if (logger.isDebugEnabled())
+                logger.debug(responseCode + " url:" + urlAsString + " resolved:" + newUrl);
         }
-        return "";
     }
 
     /**
@@ -362,12 +407,12 @@ public class HtmlFetcher {
     private JResult getFromCache(String url, String originalUrl) throws Exception {
         if (cache != null) {
             JResult res = cache.get(url);
-            if (res != null) {                
+            if (res != null) {
                 // e.g. the cache returned a shortened url as original url now we want to store the
                 // current original url! Also it can be that the cache response to url but the JResult
                 // does not contain it so overwrite it:
                 res.setUrl(url);
-                res.setOriginalUrl(originalUrl);                
+                res.setOriginalUrl(originalUrl);
                 cacheCounter.addAndGet(1);
                 return res;
             }
