@@ -219,6 +219,24 @@ public class ArticleTextExtractorTest {
         assertEquals("http://www.blogcdn.com/chinese.engadget.com/media/2011/07/2011-07-19-victorinox.jpg", res.getImageUrl());
         assertEquals("不怕被搜到的瑞士軍刀 Victorinox Swiss Army Slim, Slim Duo 隨身碟上市", res.getTitle());
     }
+
+    @Test
+    public void testUdn() throws Exception {
+        // http://udn.com/NEWS/NATIONAL/NATS1/6892153.shtml
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("udn_com_6892153.shtml")));
+        assertTrue(res.getText(), res.getText().startsWith("衛生署食品藥物管理局副局長吳秀英則強調，衛生署一定會做好三管五卡，從境外、邊境與市面上進行抽檢，捍衛國人健康"));
+        assertEquals("udn_com_6892153_files/6892153-2742383.JPG", res.getImageUrl());
+        assertEquals("經部：我方立場比韓國更多堅持 | 美牛議題再發酵 | 國內要聞", res.getTitle());
+    }
+    
+    @Test
+    public void testChinatimes() throws Exception {
+        // http://money.chinatimes.com/news/news-content.aspx?id=20120209002560&cid=1210
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("chinatimes.htm")));
+        assertTrue(res.getText(), res.getText().startsWith("手握兩百億元現金的「現金王」英業達會長葉國一，近幾個月在市場求售不動產與物業"));
+        assertEquals("./chinatimes_files/20120210002579.jpg", res.getImageUrl());
+        assertEquals("台灣「現金王」葉國一 房地產抵押設定一六二億｜產業情報｜理財新聞｜中時理財", res.getTitle());
+    }
     
     @Test
     public void testTwitterblog() throws Exception {

@@ -2,9 +2,6 @@ target/
 nb-configuration.xml
 nbactions.xml
 *~
-<<<<<<< HEAD
 /build
 /jar
-=======
 deploy-*.sh
->>>>>>> refs/remotes/karussell/master

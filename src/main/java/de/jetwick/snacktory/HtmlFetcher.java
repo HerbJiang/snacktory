@@ -80,6 +80,7 @@ public class HtmlFetcher {
     private AtomicInteger cacheCounter = new AtomicInteger(0);
     private int maxTextLength = -1;
     private ArticleTextExtractor extractor = new ArticleTextExtractor();
+    private Proxy proxy = null;
     private Set<String> furtherResolveNecessary = new LinkedHashSet<String>() {
 
         {
@@ -288,7 +289,15 @@ public class HtmlFetcher {
         return SHelper.useDomainOfFirstArg4Second(url, urlOrPath);
     }
 
-    public String fetchAsString(String urlAsString, int timeout)
+    public Proxy getProxy() {
+		return proxy;
+	}
+
+	public void setProxy(Proxy proxy) {
+		this.proxy = proxy;
+	}
+
+	public String fetchAsString(String urlAsString, int timeout)
             throws MalformedURLException, IOException {
         return fetchAsString(urlAsString, timeout, true);
     }
@@ -384,7 +393,7 @@ public class HtmlFetcher {
             boolean includeSomeGooseOptions) throws MalformedURLException, IOException {
         URL url = new URL(urlAsStr);
         //using proxy may increase latency
-        HttpURLConnection hConn = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
+        HttpURLConnection hConn = (HttpURLConnection) url.openConnection(proxy == null ? Proxy.NO_PROXY : proxy);
         hConn.setRequestProperty("User-Agent", userAgent);
         hConn.setRequestProperty("Accept", accept);
 
