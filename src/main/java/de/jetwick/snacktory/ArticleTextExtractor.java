@@ -39,6 +39,9 @@ public class ArticleTextExtractor {
             Pattern.compile("nav($|igation)|user|com(ment|bx)|(^com-)|contact|"
             + "foot|masthead|(me(dia|ta))|outbrain|promo|related|scroll|(sho(utbox|pping))|"
             + "sidebar|sponsor|tags|tool|widget");
+    
+    private static final Pattern IGNORE_IMAGE_PATTERN = 
+    		Pattern.compile("ico(/|n|\\.)|spacer|blank|zoom|comm(un|on)|commun");
     private static final String IMAGE_CAPTION = "caption";
     private static final Set<String> IGNORED_TITLE_PARTS = new LinkedHashSet<String>() {
 
@@ -312,7 +315,7 @@ public class ArticleTextExtractor {
         double score = 1;
         for (Element e : els) {
             String sourceUrl = e.attr("src");
-            if (sourceUrl.isEmpty() || isAdImage(sourceUrl))
+            if (sourceUrl.isEmpty() || isAdImage(sourceUrl) || isIconImage(sourceUrl))
                 continue;
 
             int weight = els.size() == 1 ? 1 : 0;
@@ -358,7 +361,11 @@ public class ArticleTextExtractor {
         return maxNode;
     }
 
-    /** 
+    private boolean isIconImage(String imageUrl) {
+        return IGNORE_IMAGE_PATTERN.matcher(imageUrl).find();
+	}
+
+	/** 
      * Prepares document. Currently only stipping unlikely candidates, 
      * since from time to time they're getting more score than good ones 
      * especially in cases when major text is short.

@@ -239,6 +239,24 @@ public class ArticleTextExtractorTest {
     }
     
     @Test
+    public void testLepoint() throws Exception {
+        // http://www.lepoint.fr/politique/election-presidentielle-2012/sarkozy-et-hollande-echos-croises-de-campagne-24-02-2012-1434613_324.php
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("lepoint.htm")));
+        assertTrue(res.getText(), res.getText().startsWith("Hollande vs Sarkozy, c'est parti. Alors que les sondages éloignent la perspective d'un nouveau 21 avril,"));
+        assertEquals("http://www.lepoint2.com/sons/elysee-420.jpg", res.getImageUrl());  // No good
+        assertEquals("Présidentielle - Hollande et Sarkozy cherchent du travail - Le Point", res.getTitle());
+    }
+    
+    @Test
+    public void testLefigaro() throws Exception {
+        // http://www.lepoint.fr/politique/election-presidentielle-2012/sarkozy-et-hollande-echos-croises-de-campagne-24-02-2012-1434613_324.php
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("lefigaro.htm")));
+        assertTrue(res.getText(), res.getText().startsWith("L'État n'est pas le seul à bénéficier des largesses de la SNCF. La société"));
+        assertEquals("http://www.lefigaro.fr/medias/2012/02/24/97d70314-5ea6-11e1-92d6-7ad6ef851b19-493x328.jpg", res.getImageUrl());  // No good
+        assertEquals("Le Figaro - Sociétés : La SNCF va verser 400 euros à ses cheminots", res.getTitle());
+    }
+    
+    @Test
     public void testTwitterblog() throws Exception {
         // http://engineering.twitter.com/2011/04/twitter-search-is-now-3x-faster_1656.html
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("twitter.html")));
