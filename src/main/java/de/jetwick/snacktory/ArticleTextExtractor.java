@@ -1,17 +1,19 @@
 package de.jetwick.snacktory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import org.jsoup.*;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
-import java.util.regex.Pattern;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +40,11 @@ public class ArticleTextExtractor {
     private static final Pattern NEGATIVE =
             Pattern.compile("nav($|igation)|user|com(ment|bx)|(^com-)|contact|"
             + "foot|masthead|(me(dia|ta))|outbrain|promo|related|scroll|(sho(utbox|pping))|"
-            + "sidebar|sponsor|tags|tool|widget");
+            + "sidebar|sponsor|tags|tool|widget|player");
     
-    private static final Pattern IGNORE_IMAGE_PATTERN = 
-    		Pattern.compile("ico(/|n|\\.)|spacer|blank|zoom");
+    private static final Pattern NEGATIVE_STYLE = Pattern.compile("hidden|display: ?none");
+	private static final Pattern IGNORE_IMAGE_PATTERN = 
+			Pattern.compile("ico(/|n|\\.)|spacer|blank|zoom");
     private static final String IMAGE_CAPTION = "caption";
     private static final Set<String> IGNORED_TITLE_PARTS = new LinkedHashSet<String>() {
 
@@ -71,7 +74,13 @@ public class ArticleTextExtractor {
             throw new IllegalArgumentException("html string is empty!?");
 
         // http://jsoup.org/cookbook/extracting-data/selector-syntax
-        Document doc = Jsoup.parse(html);
+        return extractContent(res, Jsoup.parse(html), formatter);
+    }
+    
+    public JResult extractContent(JResult res, Document doc, OutputFormatter formatter) throws Exception {
+        if (doc == null)
+            throw new NullPointerException("missing document");
+
         res.setTitle(extractTitle(doc));
 
         res.setDescription(extractDescription(doc));
@@ -129,6 +138,8 @@ public class ArticleTextExtractor {
 
         res.setFaviconUrl(extractFaviconUrl(doc));
 
+        res.setKeywords(extractKeywords(doc));
+        
         return res;
     }
 
@@ -147,6 +158,22 @@ public class ArticleTextExtractor {
         return SHelper.innerTrim(doc.select("head meta[name=description]").attr("content"));
     }
 
+    protected Collection<String> extractKeywords(Document doc){
+        String content = SHelper.innerTrim(doc.select("head meta[name=keywords]").attr("content"));
+        
+        if(content != null) {
+            if(content.startsWith("[") && content.endsWith("]"))
+                content = content.substring(1, content.length() - 1);
+            
+            String[] split = content.split("\\s*,\\s*");
+
+            if(split.length > 1 || !split[0].equals(""))
+                return Arrays.asList(split);
+        }
+        
+        return Collections.emptyList();
+    }
+    
     /***
      *  Tries to extract an image url from metadata if determineImageSource failed
      * @param doc
@@ -206,6 +233,10 @@ public class ArticleTextExtractor {
             weight -= 50;
 
         if (NEGATIVE.matcher(e.id()).find())
+            weight -= 50;
+        
+        String style = e.attr("style");
+        if(style != null && !style.isEmpty() && NEGATIVE_STYLE.matcher(style).find())
             weight -= 50;
 
         weight += (int) Math.round(e.ownText().length() / 100.0 * 10);
@@ -479,19 +510,16 @@ public class ArticleTextExtractor {
      * @return a set of all important nodes
      */
     public Collection<Element> getNodes(Document doc) {        
-        Map<Integer, Element> nodes = new LinkedHashMap<Integer, Element>(32);
+        Map<Element, Object> nodes = new LinkedHashMap<Element, Object>(64);
         int score = 100;
         for (Element el : doc.select("body").select("*")) {
             if ("p;div;td;h1;h2".contains(el.tagName())) {
-                // TODO reduce calculation of hashcode!
-                nodes.put(el.hashCode(), el);
-                Element p = el.parent();
-                nodes.put(p.hashCode(), p);
+                nodes.put(el, null);
                 setScore(el, score);
                 score = score / 2;
             }
         }
-        return nodes.values();
+        return nodes.keySet();
     }
 
     public String cleanTitle(String title) {
