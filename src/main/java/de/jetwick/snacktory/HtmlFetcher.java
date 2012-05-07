@@ -28,6 +28,10 @@ import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterInputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +81,7 @@ public class HtmlFetcher {
     private String accept = "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5";
     private String charset = "UTF-8";
     private SCache cache;
+    private boolean enableCompress = false;
     private AtomicInteger cacheCounter = new AtomicInteger(0);
     private int maxTextLength = -1;
     private ArticleTextExtractor extractor = new ArticleTextExtractor();
@@ -195,8 +200,16 @@ public class HtmlFetcher {
     public String getCharset() {
         return charset;
     }
+    
+    public boolean isEnableCompress() {
+		return enableCompress;
+	}
 
-    public JResult fetchAndExtract(String url, int timeout, boolean resolve) throws Exception {
+	public void setEnableCompress(boolean enableCompress) {
+		this.enableCompress = enableCompress;
+	}
+
+	public JResult fetchAndExtract(String url, int timeout, boolean resolve) throws Exception {
         String originalUrl = url;
         url = SHelper.removeHashbang(url);
         String gUrl = SHelper.getUrlFromUglyGoogleRedirect(url);
@@ -306,10 +319,21 @@ public class HtmlFetcher {
             throws MalformedURLException, IOException {
         HttpURLConnection hConn = createUrlConnection(urlAsString, timeout, includeSomeGooseOptions);
         hConn.setInstanceFollowRedirects(true);
-        InputStream is = hConn.getInputStream();
-
-//            if ("gzip".equals(hConn.getContentEncoding()))
-//                is = new GZIPInputStream(is);                        
+        
+        InputStream is = null;
+        
+		// create the appropriate stream wrapper based on
+		// the encoding type (compress type)
+        String contentEnc = hConn.getContentEncoding();
+		if (contentEnc != null && contentEnc.equalsIgnoreCase("gzip")) {
+			is = new GZIPInputStream(
+					hConn.getInputStream());
+		} else if (contentEnc != null && contentEnc.equalsIgnoreCase("deflate")) {
+			is = new InflaterInputStream(
+					hConn.getInputStream(), new Inflater(true));
+		} else {
+			is = hConn.getInputStream();
+		}                       
 
         String enc = Converter.extractEncoding(hConn.getContentType());
         String res = createConverter(urlAsString).streamToString(is, enc);
@@ -407,7 +431,8 @@ public class HtmlFetcher {
 
         // On android we got timeouts because of this!!   
         // and here this also results in invalid html for e.g. http://twitpic.com/4kuem8
-//        hConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+        if (enableCompress) 
+        	hConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
         hConn.setConnectTimeout(timeout);
         hConn.setReadTimeout(timeout);
         return hConn;

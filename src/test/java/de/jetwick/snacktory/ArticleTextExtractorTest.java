@@ -34,7 +34,7 @@ public class ArticleTextExtractorTest {
     public void testData2() throws Exception {
         // http://benjaminste.in/post/1223476561/hey-guys-whatcha-doing
         JResult res = extractor.extractContent(readFileAsString("test_data/2.html"));
-        assertEquals("BenjaminSte.in - Hey guys, whatcha doing?", res.getTitle());
+        assertEquals("Hey guys, whatcha doing?", res.getTitle());
         assertTrue(res.getText(), res.getText().startsWith("This month is the 15th anniversary of my last CD."));
     }
 
@@ -56,7 +56,7 @@ public class ArticleTextExtractorTest {
     public void testCNN() throws Exception {
         // http://edition.cnn.com/2011/WORLD/africa/04/06/libya.war/index.html?on.cnn=1
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("cnn.html")));
-        assertEquals("Gadhafi asks Obama to end NATO bombing - CNN.com", res.getTitle());
+        assertEquals("Gadhafi asks Obama to end NATO bombing", res.getTitle());
         assertEquals("/2011/WORLD/africa/04/06/libya.war/t1larg.libyarebel.gi.jpg", res.getImageUrl());
         assertTrue("cnn:" + res.getText(), res.getText().startsWith("Tripoli, Libya (CNN) -- As rebel and pro-government forces in Libya maneuvered on the battlefield Wedn"));
     }
@@ -79,7 +79,7 @@ public class ArticleTextExtractorTest {
         assertTrue(res.getText(), res.getText().startsWith("Mozilla hat Firefox 5.0a2 veröffentlicht und zugleich eine erste Entwicklerversion von Firefox 6 freigegeben."));
         assertEquals("http://scr3.golem.de/screenshots/1104/Firefox-Aurora/thumb480/aurora-nighly-beta-logos.png", res.getImageUrl());
 //        assertEquals("http://www.golem.de/1104/82797-9183-i.png", res.getImageUrl());
-        assertEquals("Mozilla: Vorabversionen von Firefox 5 und 6 veröffentlicht - Golem.de", res.getTitle());
+        assertEquals("Mozilla: Vorabversionen von Firefox 5 und 6 veröffentlicht", res.getTitle());
     }
 
     @Test
@@ -104,7 +104,7 @@ public class ArticleTextExtractorTest {
         // http://en.rian.ru/world/20110410/163458489.html
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("rian.html")));
         assertTrue(res.getText(), res.getText().startsWith("About 15,000 people took to the streets in Tokyo on Sunday to protest against th"));
-        assertEquals("Japanese rally against nuclear power industry | World", res.getTitle());
+        assertEquals("Japanese rally against nuclear power industry", res.getTitle());
         assertEquals("/favicon.ico", res.getFaviconUrl());
     }
 
@@ -132,7 +132,7 @@ public class ArticleTextExtractorTest {
 //        assertTrue(res.getText(), res.getText().startsWith("The makers of doom used remixed version of real metal songs for many"));
         assertTrue(res.getText(), res.getText().startsWith("Master of the Puppets by Metallica. Converted to 8 bit with GSXCC. Original verson can be found us"));
 
-        assertEquals("YouTube - Metallica - Master of the Puppets 8-bit", res.getTitle());
+        assertEquals("Master of the Puppets 8-bit", res.getTitle());
         assertEquals("http://i4.ytimg.com/vi/wlupmjrfaB4/default.jpg", res.getImageUrl());
         assertEquals("http://www.youtube.com/v/wlupmjrfaB4?version=3", res.getVideoUrl());
     }
@@ -187,7 +187,7 @@ public class ArticleTextExtractorTest {
         // http://www.heise.de/newsticker/meldung/Internet-Explorer-9-jetzt-mit-schnellster-JavaScript-Engine-1138062.html
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("heise.html")));
         assertEquals("", res.getImageUrl());
-        assertEquals("heise online - Internet Explorer 9 jetzt mit schnellster JavaScript-Engine", res.getTitle());
+        assertEquals("Internet Explorer 9 jetzt mit schnellster JavaScript-Engine", res.getTitle());
         assertTrue(res.getText().startsWith("Microsoft hat heute eine siebte Platform Preview des Internet Explorer veröffentlicht. In den nur dr"));
     }
 
@@ -210,6 +210,14 @@ public class ArticleTextExtractorTest {
         assertEquals("Editorial: Android's problem isn't fragmentation, it's contamination -- Engadget", res.getTitle());
     }
 
+    @Test
+    public void testDiariovasco() throws Exception {
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("diariovasco.com.htm")));
+        assertEquals("Más allá de los ayatolás. diariovasco.com", res.getTitle());
+        assertTrue(res.getText(), res.getText().startsWith("No somos árabes, somos persas. No hablamos árabe, hablamos farsi». Las dos reglas de oro para empezar con buen pie cualquier relación en la república islámica, además de cubrirse con un pañuelo en caso de las mujeres y vestirse de forma islámicamente"));
+        assertEquals("/prensa/noticias/201107/25/fotos/12145066.jpg", res.getImageUrl());
+    }
+
 
     @Test
     public void testEngadgetChinese() throws Exception {
@@ -226,7 +234,7 @@ public class ArticleTextExtractorTest {
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("udn_com_6892153.shtml")));
         assertTrue(res.getText(), res.getText().startsWith("衛生署食品藥物管理局副局長吳秀英則強調，衛生署一定會做好三管五卡，從境外、邊境與市面上進行抽檢，捍衛國人健康"));
         assertEquals("udn_com_6892153_files/6892153-2742383.JPG", res.getImageUrl());
-        assertEquals("經部：我方立場比韓國更多堅持 | 美牛議題再發酵 | 國內要聞", res.getTitle());
+        assertEquals("經部：我方立場比韓國更多堅持", res.getTitle());
     }
     
     @Test
@@ -239,12 +247,21 @@ public class ArticleTextExtractorTest {
     }
     
     @Test
+    public void testSinaHK() throws Exception {
+        // http://money.chinatimes.com/news/news-content.aspx?id=20120209002560&cid=1210
+        JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("sina.hk.htm")));
+        assertEquals("溫總最後記者會將成焦點", res.getTitle());
+        assertTrue(res.getText(), res.getText().startsWith("【明報專訊】全國政協大會明天開幕，為一年一度的人大、政協「兩會」拉開序幕，人大也將在後天（5日）開幕。今年「兩會」後的例牌總理記者會，將會是溫家寶最後一次記者會，勢將成為傳媒焦點，人大今年將審議的《刑事訴訟法修正案》和十二屆人大代表產生辦法及名額分配，亦引人注目"));
+        assertEquals("http://www.sina.com.hk/08/images/sinalogo.gif", res.getImageUrl());
+    }
+    
+    @Test
     public void testLepoint() throws Exception {
         // http://www.lepoint.fr/politique/election-presidentielle-2012/sarkozy-et-hollande-echos-croises-de-campagne-24-02-2012-1434613_324.php
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("lepoint.htm")));
         assertTrue(res.getText(), res.getText().startsWith("Hollande vs Sarkozy, c'est parti. Alors que les sondages éloignent la perspective d'un nouveau 21 avril,"));
         assertEquals("http://www.lepoint2.com/sons/elysee-420.jpg", res.getImageUrl());  // No good
-        assertEquals("Présidentielle - Hollande et Sarkozy cherchent du travail - Le Point", res.getTitle());
+        assertEquals("Hollande et Sarkozy cherchent du travail", res.getTitle());
     }
     
     @Test
@@ -253,7 +270,7 @@ public class ArticleTextExtractorTest {
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("lefigaro.htm")));
         assertTrue(res.getText(), res.getText().startsWith("L'État n'est pas le seul à bénéficier des largesses de la SNCF. La société"));
         assertEquals("http://www.lefigaro.fr/medias/2012/02/24/97d70314-5ea6-11e1-92d6-7ad6ef851b19-493x328.jpg", res.getImageUrl());  // No good
-        assertEquals("Le Figaro - Sociétés : La SNCF va verser 400 euros à ses cheminots", res.getTitle());
+        assertEquals("Sociétés : La SNCF va verser 400 euros à ses cheminots", res.getTitle());
     }
     
     @Test
@@ -271,8 +288,8 @@ public class ArticleTextExtractorTest {
         // http://www.taz.de/1/politik/asien/artikel/1/anti-atomkraft-nein-danke/
         JResult res = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("taz.html")));
         assertTrue("taz:" + res.getText(), res.getText().startsWith("Absolute Minderheit: Im Shiba-Park in Tokio treffen sich jetzt jeden Sonntag die Atomkraftgegner. Sie blicken neidisch auf die Anti-AKW-Bewegung in Deutschland. "));
-        assertEquals("Protestkultur in Japan nach der Katastrophe: Anti-Atomkraft? Nein danke! - taz.de", res.getTitle());
-//        assertEquals("http://www.taz.de/uploads/hp_taz_img/full/antiakwprotestjapandapd.20110410-19.jpg", res.getImageUrl());
+        assertEquals("Protestkultur in Japan nach der Katastrophe: Anti-Atomkraft? Nein danke!", res.getTitle());
+        assertEquals("/uploads/tx_hptazarticle/../hp_taz_img/full/antiakwprotestjapandapd.20110410-19.jpg", res.getImageUrl());
     }
 
     @Test
@@ -335,7 +352,7 @@ public class ArticleTextExtractorTest {
     public void testCnn2() throws Exception {
         //String url = "http://www.cnn.com/2010/POLITICS/08/13/democrats.social.security/index.html";
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("cnn2.html")));
-        assertEquals("Democrats to use Social Security against GOP this fall - CNN.com", article.getTitle());
+        assertEquals("Democrats to use Social Security against GOP this fall", article.getTitle());
         assertTrue(article.getText(), article.getText().startsWith("Washington (CNN) -- Democrats pledged "));
         assertEquals(article.getImageUrl(), "http://i.cdn.turner.com/cnn/2010/POLITICS/08/13/democrats.social.security/story.kaine.gi.jpg");
     }
@@ -362,7 +379,7 @@ public class ArticleTextExtractorTest {
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("stackoverflow.html")));
 //        assertTrue("stackoverflow:" + article.getText(), article.getText().startsWith("Hi, Am torn between wicket and vaadin. i am starting a micro-isv"));
         assertTrue("stackoverflow:" + article.getText(), article.getText().startsWith("I think I've invested some time for both frameworks. I really like bo"));
-        assertEquals("java - wicket vs Vaadin - Stack Overflow", article.getTitle());
+        assertEquals("wicket vs Vaadin", article.getTitle());
         assertEquals("", article.getImageUrl());
     }
 
@@ -502,7 +519,7 @@ public class ArticleTextExtractorTest {
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("slamonline.html")));
         assertTrue(article.getText(), article.getText().startsWith("When in doubt, rank players and add your findings"));
         assertEquals(article.getImageUrl(), "http://www.slamonline.com/online/wp-content/uploads/2010/10/celtics.jpg");
-        assertEquals("SLAM ONLINE | » NBA Schoolyard Rankings", article.getTitle());
+        assertEquals("» NBA Schoolyard Rankings", article.getTitle());
     }
 
     @Test
@@ -511,7 +528,7 @@ public class ArticleTextExtractorTest {
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("espn3.html")));
         assertTrue(article.getText(), article.getText().startsWith("PHILADELPHIA -- Michael Vick missed practice Thursday"));
         assertEquals("http://a.espncdn.com/i/espn/espn_logos/espn_red.png", article.getImageUrl());
-        assertEquals("Michael Vick of Philadelphia Eagles misses practice, unlikely to play vs. Dallas Cowboys - ESPN", article.getTitle());
+        assertEquals("Michael Vick of Philadelphia Eagles misses practice, unlikely to play vs. Dallas Cowboys", article.getTitle());
     }
 
     @Test
@@ -521,7 +538,7 @@ public class ArticleTextExtractorTest {
         assertTrue(article.getText(), article.getText().startsWith("ALAMEDA, Calif. — The Oakland Raiders informed coach Tom Cable on Tuesday that they will not bring him back"));
         assertEquals("http://dy.snimg.com/story-image/0/69/174475/14072-650-366.jpg",
                 article.getImageUrl());
-        assertEquals("Raiders cut ties with Cable - NFL - Sporting News", article.getTitle());
+        assertEquals("Raiders cut ties with Cable", article.getTitle());
     }
 
     @Test
@@ -529,7 +546,7 @@ public class ArticleTextExtractorTest {
         //String url = "http://msn.foxsports.com/nfl/story/Tom-Cable-fired-contract-option-Oakland-Raiders-coach-010411";
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("foxsports.html")));
         assertTrue(article.getText(), article.getText().startsWith("The Oakland Raiders informed coach Tom Cable"));
-        assertEquals("Oakland Raiders won't bring Tom Cable back as coach - NFL News",
+        assertEquals("Oakland Raiders won't bring Tom Cable back as coach",
                 article.getTitle());
     }
 
@@ -625,7 +642,7 @@ public class ArticleTextExtractorTest {
         JResult article = extractor.extractContent(c.streamToString(getClass().getResourceAsStream("br-online.html")));
         assertTrue(article.getText(), article.getText().startsWith("Wenn ein Dirigent, der Alte Musik liebt, erstmals eine "
                 + "Neuproduktion bei den Bayreuther Richard-Wagner-Festspielen übernimmt,"));                                                      
-        assertEquals("Eröffnung der 100. Bayreuther Festspiele: Alles neu beim \"Tannhäuser\" | Programmtipps | BR-KLASSIK", 
+        assertEquals("Eröffnung der 100. Bayreuther Festspiele: Alles neu beim \"Tannhäuser\"", 
                 article.getTitle());
     }
 
@@ -637,7 +654,7 @@ public class ArticleTextExtractorTest {
         assertEquals("mytitle irgendwas", extractor.cleanTitle("mytitle irgendwas | Irgendwas"));
 
         // this should fail as most sites do store their name after the post
-        assertEquals("Irgendwas | mytitle irgendwas", extractor.cleanTitle("Irgendwas | mytitle irgendwas"));
+        assertEquals("mytitle irgendwas", extractor.cleanTitle("Irgendwas | mytitle irgendwas"));
     }
     
     @Test

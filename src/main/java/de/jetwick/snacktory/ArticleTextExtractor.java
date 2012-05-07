@@ -41,7 +41,7 @@ public class ArticleTextExtractor {
             + "sidebar|sponsor|tags|tool|widget");
     
     private static final Pattern IGNORE_IMAGE_PATTERN = 
-    		Pattern.compile("ico(/|n|\\.)|spacer|blank|zoom|comm(un|on)|commun");
+    		Pattern.compile("ico(/|n|\\.)|spacer|blank|zoom");
     private static final String IMAGE_CAPTION = "caption";
     private static final Set<String> IGNORED_TITLE_PARTS = new LinkedHashSet<String>() {
 
@@ -111,8 +111,16 @@ public class ArticleTextExtractor {
             }
         }
 
-        if(res.getImageUrl().isEmpty()){
+        if (res.getImageUrl().isEmpty()) {
             res.setImageUrl(extractImageUrl(doc));
+            
+            if(res.getImageUrl().isEmpty()){
+            	Element imgEl = determineImageSource(doc.select("body").first());
+
+                if (imgEl != null) {
+                    res.setImageUrl(SHelper.replaceSpaces(imgEl.attr("src")));
+                }
+            }
         }
 
         res.setRssUrl(extractRssUrl(doc));
@@ -202,12 +210,12 @@ public class ArticleTextExtractor {
 
         weight += (int) Math.round(e.ownText().length() / 100.0 * 10);
         
-/*        if ("body".equalsIgnoreCase(e.tagName())) {
+        if ("body".equalsIgnoreCase(e.tagName())) {
             for (Element child : e.children()) {
             	weight += getWeight(child);
             }
         }
-        else */
+        else 
         	weight += weightChildNodes(e);
         return weight;
     }
@@ -315,10 +323,15 @@ public class ArticleTextExtractor {
         double score = 1;
         for (Element e : els) {
             String sourceUrl = e.attr("src");
-            if (sourceUrl.isEmpty() || isAdImage(sourceUrl) || isIconImage(sourceUrl))
+            if (sourceUrl.isEmpty() || isAdImage(sourceUrl))
                 continue;
 
             int weight = els.size() == 1 ? 1 : 0;
+            
+            if (isIconImage(sourceUrl)) {
+            	weight -= 40;
+            }
+            
             try {
                 int height = Integer.parseInt(e.attr("height"));
                 if (height > 50)
@@ -482,10 +495,51 @@ public class ArticleTextExtractor {
     }
 
     public String cleanTitle(String title) {
-        StringBuilder res = new StringBuilder();
-//        int index = title.lastIndexOf("|");
-//        if (index > 0 && title.length() / 2 < index)
-//            title = title.substring(0, index + 1);
+    	
+    	String longest = "";
+    	String cleaned = SHelper.innerTrim(title);
+    	
+    	while (true) {
+	    	String[] strs = cleaned.split("\\||( \\- )");
+	    	StringBuilder res = new StringBuilder();
+	    	
+	    	if (strs.length == 1) break;
+	    	
+	        for (String part : strs) {
+	            if (IGNORED_TITLE_PARTS.contains(part.toLowerCase().trim()))
+	                continue;
+	            
+	            if (part.length() > longest.length())
+	            	longest = part;
+	
+	            if (cleaned.length() / 2 > part.length())
+	                continue;
+	
+	            if (res.length() > 0)
+	                res.append("|");
+	
+	            res.append(part);
+	        }
+	        
+	        cleaned = res.toString();
+    	}
+    	
+    	if (cleaned.isEmpty())
+    		return SHelper.innerTrim(longest);
+    	
+    	return SHelper.innerTrim(cleaned);
+    	/*do {
+        	title = title.replaceAll("[\\|\\-\\s]+$", "");
+	    	int index = title.lastIndexOf("|");
+	    	if (index > 0 && title.length() / 2 < index)
+				title = title.substring(0, index + 1);
+	    	else 
+	    		break;
+    	} while (true);
+      
+    	return SHelper.innerTrim(title);*/
+    	
+        /*StringBuilder res = new StringBuilder();
 
         int counter = 0;
         String[] strs = title.split("\\|");
@@ -503,6 +557,6 @@ public class ArticleTextExtractor {
             counter++;
         }
 
-        return SHelper.innerTrim(res.toString());
+        return SHelper.innerTrim(res.toString());*/
     }
 }
