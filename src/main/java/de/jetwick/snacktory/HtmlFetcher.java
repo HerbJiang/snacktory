@@ -81,6 +81,7 @@ public class HtmlFetcher {
     private String accept = "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5";
     private String charset = "UTF-8";
     private SCache cache;
+    private HttpPageReader pageReader = null;
     private boolean enableCompress = false;
     private AtomicInteger cacheCounter = new AtomicInteger(0);
     private int maxTextLength = -1;
@@ -176,7 +177,17 @@ public class HtmlFetcher {
         return referrer;
     }
 
-    public HtmlFetcher setReferrer(String referrer) {
+    public HttpPageReader getHttpPageReader() {
+    	if (pageReader == null)
+    		pageReader = new HijackableHttpPageReader();
+		return pageReader;
+	}
+
+	public void setHttpPageReader(HttpPageReader pageReader) {
+		this.pageReader = pageReader;
+	}
+
+	public HtmlFetcher setReferrer(String referrer) {
         this.referrer = referrer;
         return this;
     }
@@ -208,7 +219,7 @@ public class HtmlFetcher {
 	public void setEnableCompress(boolean enableCompress) {
 		this.enableCompress = enableCompress;
 	}
-
+	
 	public JResult fetchAndExtract(String url, int timeout, boolean resolve) throws Exception {
         String originalUrl = url;
         url = SHelper.removeHashbang(url);
@@ -317,8 +328,22 @@ public class HtmlFetcher {
 
     public String fetchAsString(String urlAsString, int timeout, boolean includeSomeGooseOptions)
             throws MalformedURLException, IOException {
-        HttpURLConnection hConn = createUrlConnection(urlAsString, timeout, includeSomeGooseOptions);
-        hConn.setInstanceFollowRedirects(true);
+        /*HttpURLConnection hConn = createUrlConnection(urlAsString, timeout, includeSomeGooseOptions);
+        // hConn.setInstanceFollowRedirects(true);
+        
+        hConn.setInstanceFollowRedirects(false);
+        hConn.connect();
+		final int responseCode = hConn.getResponseCode();
+		
+		if (responseCode == 301) {
+			java.lang.System.out.println("Got redirection:" + responseCode);
+			final String location = hConn.getHeaderField("Location");
+
+			if (location != null && !location.isEmpty()) {
+				urlAsString = location;
+				hConn = createUrlConnection(urlAsString, timeout, includeSomeGooseOptions);
+			}
+		}
         
         InputStream is = null;
         
@@ -338,8 +363,19 @@ public class HtmlFetcher {
         String enc = Converter.extractEncoding(hConn.getContentType());
         String res = createConverter(urlAsString).streamToString(is, enc);
         if (logger.isDebugEnabled())
-            logger.debug(res.length() + " FetchAsString:" + urlAsString);
-        return res;
+            logger.debug(res.length() + " FetchAsString:" + urlAsString);*/
+    	
+    	HttpPageReader pr = getHttpPageReader();
+    	pr.setTimeoutConnection(timeout);
+    	
+        try {
+			return pr.readPage(urlAsString);
+		}
+		catch (PageReadException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
     }
     
     public Converter createConverter(String url) {

@@ -176,14 +176,20 @@ public class SHelper {
             return path;
         else if (path.startsWith("/"))
             return "http://" + extractHost(urlForDomain) + path;
-        else if (path.startsWith("../")) {
+        else {//if (path.startsWith("../")) {
             int slashIndex = urlForDomain.lastIndexOf("/");
             if (slashIndex > 0 && slashIndex + 1 < urlForDomain.length())
                 urlForDomain = urlForDomain.substring(0, slashIndex + 1);
 
             return urlForDomain + path;
         }
-        return path;
+        //return path;
+    }
+    
+    public static String getSrcOrRelFromImageElement(Element imgElm) {
+    	if (imgElm.hasAttr("src"))
+    		return imgElm.attr("src");
+    	return imgElm.attr("rel");
     }
 
     public static String extractHost(String url) {

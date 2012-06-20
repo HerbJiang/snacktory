@@ -44,7 +44,7 @@ public class ArticleTextExtractor {
     
     private static final Pattern NEGATIVE_STYLE = Pattern.compile("hidden|display: ?none");
 	private static final Pattern IGNORE_IMAGE_PATTERN = 
-			Pattern.compile("ico(/|n|\\.)|spacer|blank|zoom");
+			Pattern.compile("(?i)ico(/|n|\\.)|spacer|blank|zoom|logo|temp");
     private static final String IMAGE_CAPTION = "caption";
     private static final Set<String> IGNORED_TITLE_PARTS = new LinkedHashSet<String>() {
 
@@ -53,7 +53,7 @@ public class ArticleTextExtractor {
             add("facebook");
         }
     };
-    private static final OutputFormatter DEFAULT_FORMATTER = new OutputFormatter();
+    private static final OutputFormatter DEFAULT_FORMATTER = new MyOutputFormatter();
 
     /** 
      * @param html extracts article text from given html string. 
@@ -105,7 +105,7 @@ public class ArticleTextExtractor {
         if (bestMatchElement != null) {
             Element imgEl = determineImageSource(bestMatchElement);
             if (imgEl != null) {
-                res.setImageUrl(SHelper.replaceSpaces(imgEl.attr("src")));
+                res.setImageUrl(SHelper.replaceSpaces(SHelper.getSrcOrRelFromImageElement(imgEl)));
                 // TODO remove parent container of image if it is contained in bestMatchElement
                 // to avoid image subtitles flooding in
             }
@@ -122,14 +122,14 @@ public class ArticleTextExtractor {
 
         if (res.getImageUrl().isEmpty()) {
             res.setImageUrl(extractImageUrl(doc));
-            
-            if(res.getImageUrl().isEmpty()){
-            	Element imgEl = determineImageSource(doc.select("body").first());
 
-                if (imgEl != null) {
-                    res.setImageUrl(SHelper.replaceSpaces(imgEl.attr("src")));
-                }
-            }
+	        if(res.getImageUrl().isEmpty()){
+	        	Element imgEl = determineImageSource((bestMatchElement != null && bestMatchElement.parent() != null) ? bestMatchElement.parent() : doc.select("body").first());
+	
+	            if (imgEl != null) {
+	                res.setImageUrl(SHelper.replaceSpaces(SHelper.getSrcOrRelFromImageElement(imgEl)));
+	            }
+	        }
         }
 
         res.setRssUrl(extractRssUrl(doc));
@@ -353,7 +353,7 @@ public class ArticleTextExtractor {
 
         double score = 1;
         for (Element e : els) {
-            String sourceUrl = e.attr("src");
+            String sourceUrl = SHelper.getSrcOrRelFromImageElement(e);
             if (sourceUrl.isEmpty() || isAdImage(sourceUrl))
                 continue;
 
@@ -365,8 +365,10 @@ public class ArticleTextExtractor {
             
             try {
                 int height = Integer.parseInt(e.attr("height"));
-                if (height > 50)
-                    weight += 20;
+                if (height > 50) {
+                	if (height > 150) weight += 41;
+                	else weight += 20;
+                }
                 else if (height < 50)
                     weight -= 20;
             } catch (Exception ex) {
@@ -374,8 +376,10 @@ public class ArticleTextExtractor {
 
             try {
                 int width = Integer.parseInt(e.attr("width"));
-                if (width > 50)
-                    weight += 20;
+                if (width > 50) {
+                	if (width > 150) weight += 41;
+                	else weight += 20;
+                }
                 else if (width < 50)
                     weight -= 20;
             } catch (Exception ex) {
@@ -406,6 +410,8 @@ public class ArticleTextExtractor {
     }
 
     private boolean isIconImage(String imageUrl) {
+    	if ("http://pg.udn.com/2010/images/udnlogo.png".equals(imageUrl))
+    		return true;
         return IGNORE_IMAGE_PATTERN.matcher(imageUrl).find();
 	}
 
