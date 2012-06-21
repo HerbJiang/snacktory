@@ -534,7 +534,7 @@ public class ArticleTextExtractor {
     	String cleaned = SHelper.innerTrim(title);
     	
     	while (true) {
-	    	String[] strs = cleaned.split("\\||( \\- )");
+	    	String[] strs = cleaned.split("(\\| *)|( \\- )");
 	    	StringBuilder res = new StringBuilder();
 	    	
 	    	if (strs.length == 1) break;
