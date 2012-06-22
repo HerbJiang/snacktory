@@ -546,7 +546,7 @@ public class ArticleTextExtractor {
 	            if (part.length() > longest.length())
 	            	longest = part;
 	
-	            if (cleaned.length() / 2 > part.length())
+	            if (cleaned.length() / 2 >= part.length())
 	                continue;
 	
 	            if (res.length() > 0)
